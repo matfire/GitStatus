@@ -2,6 +2,7 @@ import React from 'react'
 import { MDBBtn, MDBRow, MDBCol, MDBCard, MDBCardText, MDBCardHeader, MDBCardBody, MDBTable, MDBTableBody, MDBTableHead } from "mdbreact";
 import Layout from './Layout';
 import {BreedingRhombusSpinner} from 'react-epic-spinners'
+import LanguageChart from '../Components/LanguageChart';
 
 
 
@@ -14,6 +15,7 @@ class Home extends React.Component {
         open_issues:[],
         pull_requests:[],
         contribs:[],
+        orgs:[],
         loading:true
     }
     componentDidMount() {
@@ -22,7 +24,7 @@ class Home extends React.Component {
             query:graphs.GET_REPOS
         }).then(data => {
             this.setState({
-                projets:data.data.viewer.repositories.nodes
+                projets:data.data.viewer.repositories.nodes.reverse()
             })
             graphs.client.query({
                 query:graphs.GET_OPEN_ISSUES
@@ -40,8 +42,15 @@ class Home extends React.Component {
                         query:graphs.GET_CONTRIBS
                     }).then(data => {
                         this.setState({
-                            contribs:data.data.viewer.repositoriesContributedTo.nodes,
-                            loading:false
+                            contribs:data.data.viewer.repositoriesContributedTo.nodes.reverse(),
+                        })
+                        graphs.client.query({
+                            query: graphs.GET_ORGS
+                        }).then(data => {
+                            this.setState({
+                                orgs:data.data.viewer.organizations.nodes,
+                                loading:false
+                            })
                         })
                     })
                 }).catch(err => {
@@ -58,7 +67,8 @@ class Home extends React.Component {
     }
     render() {
         let projects_rows = []
-        let projects = this.state.projets.reverse()
+        let projects = this.state.projets
+        console.log(projects)
         for (let i = 0; i < 6; i++) {
             if (!projects[i])
                 break
@@ -70,10 +80,10 @@ class Home extends React.Component {
             projects_rows.push({
                 name: projects[i].name,
                 languages: language_string,
-                info: <MDBBtn color="secondary" href={projects[i].url} target="_blank">More Info</MDBBtn>
+                info: <MDBBtn color="secondary" href={projects[i].url} target="_blank">More Data</MDBBtn>
             })
         }
-        let contribs = this.state.contribs.reverse()
+        let contribs = this.state.contribs
         let contribs_rows = []
         for (let i = 0; i < 6; i++) {
             if (!contribs[i])
@@ -115,17 +125,7 @@ class Home extends React.Component {
             ],
             rows:contribs_rows
         }
-        // let rows = this.state.projets.map((project) => {
-        //     let language_string = ""
-        //     project.languages["nodes"].map(language => {
-        //         language_string += language.name + " "
-        //     })
-        //     return(
-        //     {
-        //         name: project.name,
-        //         languages: language_string
-        //     })
-        // })
+
         let project_data = {
             columns: [
                 {
@@ -208,6 +208,39 @@ class Home extends React.Component {
                             <MDBTable>
                                 <MDBTableHead columns={data_contribs.columns} />
                                 <MDBTableBody rows={data_contribs.rows} />
+                            </MDBTable>
+                        </MDBCardBody>
+                    </MDBCard>
+                </MDBCol>
+            </MDBRow>
+            <MDBRow className="mt-5 pt-2">
+                <MDBCol md="6">
+                    <MDBCard className="text-center">
+                        <MDBCardHeader>Most used languages</MDBCardHeader>
+                        <MDBCardBody>
+                            <LanguageChart data={this.state.projets} />
+                        </MDBCardBody>
+                    </MDBCard>
+                </MDBCol>
+                <MDBCol md="6">
+                    <MDBCard className="text-center">
+                        <MDBCardHeader>Latest organizations you joined</MDBCardHeader>
+                        <MDBCardBody>
+                            <MDBTable>
+                                <MDBTableHead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>#</th>
+                                    </tr>
+                                </MDBTableHead>
+                                <MDBTableBody>
+                                    {this.state.orgs.map((org) => (
+                                        <tr key={org.id}>
+                                            <td>{org.name}</td>
+                                            <td><MDBBtn color="secondary" href={org.url} target="_blank">More Info</MDBBtn></td>
+                                        </tr>
+                                    ))}
+                                </MDBTableBody>
                             </MDBTable>
                         </MDBCardBody>
                     </MDBCard>

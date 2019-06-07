@@ -15,10 +15,11 @@ let GET_ORGS = gql`
     {
         viewer {
             name
-                organizations(last: 100) {
+                organizations(last: 6) {
                 nodes {
                 name
                 id
+                url
                 }
             }
         }
